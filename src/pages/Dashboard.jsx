@@ -1,10 +1,12 @@
 import { useState, useEffect, Fragment } from "react";
 import { Dialog, Menu, Transition } from "@headlessui/react";
+import { useQuery } from "@tanstack/react-query";
+import Axios from "axios";
+
 import {
   HomeIcon,
   UserGroupIcon,
   XIcon,
-  LogoutIcon,
   BadgeCheckIcon,
   XCircleIcon,
   QrcodeIcon,
@@ -60,26 +62,33 @@ const handleLogout = () => {
 
 export default function Dashboard() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [users, setUsers] = useState([]);
-  const [status, setStatus] = useState(null);
 
-  useEffect(() => {
-    let token = localStorage.getItem("accessToken");
-    console.log(token);
+  let token = localStorage.getItem("accessToken");
+  console.log(token);
+  const headers = {
+    "Content-Type": "application/json",
+    "x-access-token": token,
+  };
 
-    const headers = {
-      "Content-Type": "application/json",
-      "x-access-token": token,
-    };
+  const {
+    data: userData,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery(["users"], () => {
+    return Axios.get("http://audiobar.xyz/api/admin/all_users", {
+      headers,
+    }).then((res) => res.data);
+  });
 
-    fetch("http://audiobar.xyz/api/admin/all_users", { headers }).then(
-      (result) => {
-        result.json().then((resp) => {
-          setUsers(resp);
-        });
-      }
-    );
-  }, []);
+  if (isError) {
+    return <h1> Sorry, there was an error : {error.message}</h1>;
+  }
+
+  if (isLoading) {
+    return <h1> Loading...</h1>;
+  }
 
   return (
     <>
@@ -316,6 +325,7 @@ export default function Dashboard() {
               <h2 className="max-w-6xl mx-auto mt-8 px-4 text-lg leading-6 font-medium text-gray-900 sm:px-6 lg:px-8 text-left">
                 Recent activity
               </h2>
+              {/* <button onClick={refetch}> Update Data </button> */}
 
               <div className="hidden sm:block mt-8">
                 <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
